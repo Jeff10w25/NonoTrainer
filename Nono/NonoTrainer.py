@@ -82,7 +82,6 @@ async def ask_trainer(message):
     gamemode = await client.wait_for("message", check=check)
     await end_session(gamemode)
     if gamemode.content in modes:
-      #await asyncio.sleep(1)
       await message.channel.send(f"Chosen {gamemode.content}. How many tiles we doing, fellas? (5-100)")
       #loop checking whether the messages are in the correct format
     
@@ -90,7 +89,6 @@ async def ask_trainer(message):
         tile = await client.wait_for("message", check=check)
         await end_session(tile)
         if tile.content in str(tile_size):
-          #await asyncio.sleep(1)
           await message.channel.send(f"{tile.content} tiles, huh?. And how many seconds do you need? (<=100)")
         
           while True: 
@@ -116,7 +114,7 @@ async def congratulate(gamemode,pattern_all,pattern_add,total_time,second,messag
       await message.channel.send(f"Correct! You made it in time. I knew you can do it.  Time: %.4s seconds \n" % (total_time))
     else:
       await message.channel.send(f"Good. But you went over the time limit. I suggest getting good. Time: %.4s seconds \n" % (total_time))
-  if gamemode == 'gamemode 2':
+  elif gamemode == 'gamemode 2':
     pattern_remaining = (len(pattern_all))-(len(pattern_add))
     if pattern_remaining != 0:
       if total_time <= second:
