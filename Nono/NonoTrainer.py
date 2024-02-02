@@ -108,19 +108,19 @@ async def ask_trainer(message):
 @client.event
 async def congratulate(gamemode,pattern_all,pattern_add,total_time,second,message):
   #This function is only used when user answer the questions correctly. This function will send the text message and also check for remaining patterns when playing gamemode 2
+  if total_time <= second:
+    sentence = "Correct! You made it in time. I knew you can do it."
+  elif total_time > second:
+    sentence = "Good. But you went over the time limit. I suggest getting good."
   
-  if gamemode == 'gamemode 1':
-    if total_time <= second:
-      await message.channel.send(f"Correct! You made it in time. I knew you can do it.  Time: %.4s seconds \n" % (total_time))
-    else:
-      await message.channel.send(f"Good. But you went over the time limit. I suggest getting good. Time: %.4s seconds \n" % (total_time))
+  elif gamemode == 'gamemode 1':
+    await message.channel.send(f"{sentence} Time: %.4s seconds \n" % (total_time))
+
   elif gamemode == 'gamemode 2':
     pattern_remaining = (len(pattern_all))-(len(pattern_add))
     if pattern_remaining != 0:
-      if total_time <= second:
-        await message.channel.send(f"Correct! You made it in time. I knew you can do it.  Time: %.4s seconds \n**{pattern_remaining}** perfect patterns remaining." % (total_time))
-      else:
-        await message.channel.send(f"Good. But you went over the time limit. I suggest getting good. Time: %.4s seconds \n**{pattern_remaining}** perfect patterns remaining." % (total_time))
+      await message.channel.send(f"{sentence}  Time: %.4s seconds \n**{pattern_remaining}** perfect patterns remaining." % (total_time))
+
     elif pattern_remaining == 0:
       await message.channel.send(f"**Congratulations!** Game ended. There are no perfect patterns left in the pool.")
       await message.channel.send(file=discord.File('cat_close_up.png'))

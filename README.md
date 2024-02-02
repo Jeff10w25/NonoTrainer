@@ -11,6 +11,7 @@ This is still a work in progress. I plan on optimizing my code and adding more f
 # What are Nonosweeper and Nonograms?
 
 Nonograms: https://en.wikipedia.org/wiki/Nonogram
+
 Nonosweeper: https://www.nonosweeper.com/
 
 # What are perfect patterns?
