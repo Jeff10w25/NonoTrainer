@@ -8,7 +8,7 @@ To train player's pattern recognition by playing mini-game with players and show
 
 ### About me
 
-I am a Nonosweeper player with a personal bests of 1.686+15.667+51.56+153.698 = 222.611. My account id is 77227 or known as Hoshino on [League of Minesweeper](https://www.taptap.cn/app/138188). 
+I am a Nonosweeper player with a personal bests of 1.686+15.667+50.22+153.698 = 221.271. My account id is 77227 or known as Hoshino on [League of Minesweeper](https://www.taptap.cn/app/138188). 
 
 This is still a work in progress. I plan on optimizing my code and adding more functions.
 
