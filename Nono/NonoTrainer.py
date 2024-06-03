@@ -2,118 +2,80 @@ import asyncio
 import discord
 import numpy as np
 import os
-import random
 import settings
 import sys
 import time
+from constrainedSum import constrained_sum_pos, constrained_sum_sample
 
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
-
-def constrained_sum_sample(n, total):
-#Return a randomly chosen list of n positive integers summing to total. Each such list is equally likely to occur.
-
-  dividers = sorted(random.sample(range(1, total), n - 1))
-  return [a - b for a, b in zip(dividers + [total], [0] + dividers)]
-
-def constrained_sum_pos(n, x):
-  results = []
-
-  def sum_to_x_helper(n, x, path):
-      if n == 0 and x == 0:
-          sorted_path = sorted(path)
-          if sorted_path not in results:
-              results.append(sorted_path)
-      elif n > 0:
-          for i in range(1, x + 1):
-              sum_to_x_helper(n - 1, x - i, path + [i])
-
-  sum_to_x_helper(n, x, [])
-  unique_results = [list(t) for t in set(tuple(element) for element in results)]
-  return unique_results
+Message = discord.Message
   
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     print('Wassup. What shall we do today?'.format(client))
 
 @client.event
-async def end_session(input):
+async def end_session(input: str) -> None:
   commands = ["abort","stop","$pattern","$help","trainer"]
   if input.content in commands:
     await input.channel.send("Session ends. Type new command to start new session.")
     python = sys.executable
     os.execl(python, python, * sys.argv)
 
-@client.event
-async def ask_pattern(message):
-  tile_size = np.arange(5,26)
-  number_size = [np.arange(1,14)]+['all']
+@client.event 
+async def ask_question(message: Message, question: str, ans_list: list) -> str:
+  # Use to ask question and check then returns the answer if it is valid (in ans_list) otherwise the loop continues
   def check(msg):
     return msg.author == message.author
-
-  await message.channel.send(f"How many tiles we doing, fellas? (5-25)")
-  #loop checking whether the messages are in the correct format
-  while True: 
-    tile = await client.wait_for("message", check=check)
-    await end_session(tile)
-    if tile.content in str(tile_size):
-      await message.channel.send(f"{tile.content} tiles. And how many numbers? (1-{int(np.ceil(int(tile.content)/2))} or 'all')")
-      while True: 
-        number = await client.wait_for("message", check=check)
-        await end_session(number)
-        if number.content=='all' or ((number.content in str(number_size)) and (int(number.content) <= np.ceil(int(tile.content)/2))):
-          return tile.content,number.content
-        else: 
-          continue
-    else: 
-      continue
-      
-@client.event
-async def ask_trainer(message):
-  tile_size = np.arange(5,101)
-  second_size = np.arange(0,101.1)
-  modes = ['gamemode 1', 'gamemode 2']
-  def check(msg):
-    return msg.author == message.author
-
-  await message.channel.send("What gamemode do you wish to play? (random='gamemode 1', limited='gamemode 2')")
-  while True: 
-    gamemode = await client.wait_for("message", check=check)
-    await end_session(gamemode)
-    if gamemode.content in modes:
-      await message.channel.send(f"Chosen {gamemode.content}. How many tiles we doing, fellas? (5-100)")
-      #loop checking whether the messages are in the correct format
-    
-      while True: 
-        tile = await client.wait_for("message", check=check)
-        await end_session(tile)
-        if tile.content in str(tile_size):
-          await message.channel.send(f"{tile.content} tiles, huh?. And how many seconds do you need? (<=100)")
-        
-          while True: 
-            second = await client.wait_for("message", check=check)
-            await end_session(second)
-            if second.content in str(second_size):
-              #await asyncio.sleep(1)
-              await message.channel.send(f"So you need {second.content} seconds. Well, good luck!")
-              return tile.content,second.content,gamemode.content
-          else: 
-            continue
-      else: 
-        continue
-    else: 
-      continue
-
-@client.event
-async def congratulate(gamemode,pattern_all,pattern_add,total_time,second,message):
-  #This function is only used when user answer the questions correctly. This function will send the text message and also check for remaining patterns when playing gamemode 2
-  if total_time <= second:
-    sentence = "Correct! You made it in time. I knew you can do it."
-  elif total_time > second:
-    sentence = "Good. But you went over the time limit. I suggest getting good."
   
-  elif gamemode == 'gamemode 1':
+  await message.channel.send(question)
+  # loop checking whether the messages are in the correct format
+  while True:
+    ans = await client.wait_for("message", check=check)
+    await end_session(ans)
+    if ans.content in ans_list:
+        return ans.content
+
+@client.event
+async def ask_pattern(message: Message) -> str:
+  tile_size = str(np.arange(5,26))
+  number_size = str([np.arange(1,14)]+['all'])
+  
+  tile_select = "How many tiles we doing, fellas? (5-25)"
+  tile = await ask_question(message, tile_select, tile_size)
+  
+  number_select = f"{tile} tiles. And how many numbers? (1-{int(np.ceil(int(tile.content)/2))} or 'all')"
+  number = await ask_question(message, number_select, number_size)
+
+  return tile, number
+
+@client.event
+async def ask_trainer(message: Message) -> str:
+  modes = ['gamemode 1', 'gamemode 2']
+  tile_size = str(np.arange(5,101))
+  second_size = str(np.arange(0,101.1))
+  
+  gamemode_select = "What gamemode do you wish to play? (random='gamemode 1', limited='gamemode 2')"
+  gamemode = await ask_question(message, gamemode_select, modes)
+  
+  tile_select = f"Chosen {gamemode}. How many tiles we doing, fellas? (5-100)"
+  tile = await ask_question(message, tile_select, tile_size)
+  
+  second_select = f"{tile} tiles, huh?. And how many seconds do you need? (<=100)"
+  second = await ask_question(message, second_select, second_size)
+  await message.channel.send(f"So you need {second} seconds. Well, good luck!")
+  
+  return tile, second, gamemode
+
+@client.event
+async def congratulate(gamemode,pattern_all,pattern_add,total_time,second,message: Message):
+  #This function is only used when user answer the questions correctly. This function will send the text message and also check for remaining patterns when playing gamemode 2
+  
+  sentence = "Correct! You made it in time. I knew you can do it." if (total_time <= second) else "Good. But you went over the time limit. I suggest getting good."
+  
+  if gamemode == 'gamemode 1':
     await message.channel.send(f"{sentence} Time: %.4s seconds \n" % (total_time))
 
   elif gamemode == 'gamemode 2':
@@ -153,7 +115,7 @@ async def nono_pattern(tile,number,message):
   await message.channel.send(f"Totaling to **{sum(len(l) for l in pattern_pos)}** unique combinations")
   
 @client.event
-async def nono_trainer(tile,second,gamemode,message):
+async def nono_trainer(tile,second,gamemode,message: Message):
   YES = ["y","yy","ye","yes","yea","yeah","Y","Ye","Yes","YES","Yea","Yeah",]
   NO = ["n","nn","no","nah","na","nein","nope","N","No","NO","Nah","Na","Nein","Nope"]
   tile_number = int(tile)
@@ -179,7 +141,7 @@ async def nono_trainer(tile,second,gamemode,message):
     if gamemode == 'gamemode 1':
       result_1 = constrained_sum_sample(amount, mine_remaining)
       
-    if gamemode == 'gamemode 2':
+    elif gamemode == 'gamemode 2':
       result_1 = constrained_sum_sample(amount, mine_remaining)
       while True:
         if (sorted(result_1) in pattern_add) or (sorted(result_1) in result_wrong):
@@ -273,4 +235,8 @@ async def on_message(message):
     tile,second,gamemode = await ask_trainer(message)
     await nono_trainer(tile,second,gamemode,message)
 
-client.run(settings.DISCORD_SECRET)
+def main() -> None:
+  client.run(settings.DISCORD_SECRET)
+  
+if __name__ == '__main__':
+  main()
